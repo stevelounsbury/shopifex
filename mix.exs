@@ -1,12 +1,17 @@
 defmodule Shopifex.MixProject do
   use Mix.Project
 
+  @sqlite_test_db? System.get_env("SHOPIFEX_DB") == "sqlite"
+
   def project do
     [
       app: :shopifex,
       version: "3.0.0",
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
+      # The dummy repo's adapter is fixed at compile time, so each SHOPIFEX_DB
+      # value gets its own build dir instead of a stale-config error.
+      build_path: if(@sqlite_test_db?, do: "_build/sqlite", else: "_build"),
       compilers: Mix.compilers(),
       deps: deps(),
       aliases: aliases(),
@@ -65,7 +70,13 @@ defmodule Shopifex.MixProject do
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:cors_plug, "~> 2.0 or ~> 3.0"},
       {:req, "~> 0.5"}
-    ]
+    ] ++ sqlite_test_deps()
+  end
+
+  # Opt-in (SHOPIFEX_DB=sqlite) so the Elixir 1.15 CI job never resolves it: no
+  # ecto_sqlite3 release supports both Elixir 1.15 and ecto_sql 3.14.
+  defp sqlite_test_deps do
+    if @sqlite_test_db?, do: [{:ecto_sqlite3, ">= 0.0.0", only: :test}], else: []
   end
 
   defp aliases do

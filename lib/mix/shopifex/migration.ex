@@ -207,9 +207,6 @@ defmodule Mix.Shopifex.Migration do
   defp to_migration_index(table, {key_or_keys, true}),
     do: "create unique_index(:#{table}, #{inspect(List.wrap(key_or_keys))})"
 
-  defp to_migration_index(table, {key_or_keys, :gin}),
-    do: "create index(:#{table}, #{inspect(List.wrap(key_or_keys))}, using: \"GIN\")"
-
   defp to_migration_index(table, {key_or_keys, :index}),
     do: "create index(:#{table}, #{inspect(List.wrap(key_or_keys))})"
 end

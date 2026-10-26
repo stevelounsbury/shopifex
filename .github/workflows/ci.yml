@@ -34,6 +34,13 @@ jobs:
           # Current toolchain used for local development.
           - elixir: "1.18.2"
             otp: "27.3"
+          # Same suite on SQLite, so non-portable queries/DDL fail CI.
+          - elixir: "1.18.2"
+            otp: "27.3"
+            db: sqlite
+
+    env:
+      SHOPIFEX_DB: ${{ matrix.db || 'postgres' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -50,9 +57,9 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-mix-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-${{ hashFiles('mix.lock') }}
+          key: ${{ runner.os }}-mix-${{ env.SHOPIFEX_DB }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-${{ hashFiles('mix.lock') }}
           restore-keys: |
-            ${{ runner.os }}-mix-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
+            ${{ runner.os }}-mix-${{ env.SHOPIFEX_DB }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
 
       - name: Install dependencies
         run: mix deps.get

@@ -37,4 +37,15 @@ defmodule Mix.Shopifex.MigrationTest do
     assert migration =~ "references(:shopify_shops, on_delete: :delete_all)"
     refute migration =~ "on_delete: :nothing"
   end
+
+  test "indexes use no adapter-specific index methods" do
+    migration =
+      Mix.Shopifex.Migration.gen("CreateShopifyTables", "shopify", %{
+        repo: ShopifexDummy.Repo,
+        binary_id: false
+      })
+
+    assert migration =~ "create index(:shopify_grants, [:shop_id])"
+    refute migration =~ "using:"
+  end
 end

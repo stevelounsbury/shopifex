@@ -537,8 +537,7 @@ defmodule Shopifex.Auth do
     schema = shop_schema()
 
     repo().transaction(fn ->
-      locked_shop =
-        repo().one(from(s in schema, where: s.id == ^snapshot.id, lock: "FOR UPDATE"))
+      locked_shop = lock_shop(schema, snapshot.id)
 
       cond do
         is_nil(locked_shop) ->
@@ -563,6 +562,22 @@ defmodule Shopifex.Auth do
       {:ok, {:superseded, shop}} -> {:ok, :superseded, shop}
       {:ok, persisted_shop} -> {:ok, persisted_shop}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Portable `SELECT ... FOR UPDATE`, which not every adapter supports (SQLite
+  # has no row locks). A no-op UPDATE takes the row's write lock on any SQL
+  # database (SQLite: the database write lock) until the transaction ends, and
+  # being the first statement, it never needs a read lock upgraded.
+  defp lock_shop(schema, id) do
+    from(s in schema,
+      where: s.id == ^id,
+      update: [set: [token_expires_at: s.token_expires_at]]
+    )
+    |> repo().update_all([])
+    |> case do
+      {0, _} -> nil
+      {_, _} -> repo().get(schema, id)
     end
   end
 
@@ -684,7 +699,7 @@ defmodule Shopifex.Auth do
 
     result =
       repo().transaction(fn ->
-        case repo().one(from(s in schema, where: s.id == ^shop.id, lock: "FOR UPDATE")) do
+        case lock_shop(schema, shop.id) do
           nil ->
             repo().rollback(:shop_not_found)
 

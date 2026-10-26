@@ -499,18 +499,18 @@ defmodule Shopifex.AuthTest do
       assert_receive {:refresh_request, request_pid}, 1_000
 
       # While the refresh is parked inside the HTTP call, a second, independent
-      # connection must be able to lock the row at once. NOWAIT turns a held
-      # lock into an immediate error instead of a hang.
-      lock_result =
+      # connection must be able to write the row at once. The short timeout
+      # turns a held lock into an error instead of a hang.
+      write_result =
         Sandbox.unboxed_run(Repo, fn ->
-          Repo.transaction(fn ->
-            Repo.one(
-              from(s in ShopifexDummy.Shop, where: s.id == ^shop.id, lock: "FOR UPDATE NOWAIT")
-            )
-          end)
+          Repo.update_all(
+            from(s in ShopifexDummy.Shop, where: s.id == ^shop.id),
+            [set: [scope: "read_orders"]],
+            timeout: 1_000
+          )
         end)
 
-      assert {:ok, %ShopifexDummy.Shop{}} = lock_result
+      assert {1, _} = write_result
 
       send(request_pid, :release_refresh)
 

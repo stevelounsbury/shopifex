@@ -20,6 +20,11 @@ def deps do
 end
 ```
 
+Shopifex works with any Ecto SQL adapter that supports `RETURNING`,
+`ON CONFLICT` upserts and `NULLS FIRST` ordering. CI runs the suite against
+PostgreSQL and SQLite (`ecto_sqlite3`); `SHOPIFEX_DB=sqlite mix test` runs it
+locally against SQLite.
+
 ## Learning resources
 
 - **[Parity matrix](docs/parity-matrix.md)** — how Shopifex compares to Shopify's

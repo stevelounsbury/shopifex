@@ -302,6 +302,14 @@ branch has been published to Hex yet (the latest published release is 2.4.0).
 
 ### Fixed
 
+- **SQLite support.** Token refresh, managed-install re-exchange and
+  `Shopifex.Auth.migrate_to_expiring_token/1` locked the shop row with
+  `SELECT ... FOR UPDATE`, which `ecto_sqlite3` rejects ("locks are not
+  supported"), so the first refresh of an installed shop raised. The row is now
+  locked with a no-op `UPDATE` inside the same transaction, which every SQL
+  database supports. `mix shopifex.install` no longer generates a `GIN` index on
+  `grants.grants` (`using:` raises on SQLite); the `shop_id` index already
+  bounds the guard lookup to one shop's grants. CI runs the suite on SQLite too.
 - **Embedded pages render inside the Shopify admin again on Phoenix 1.8.**
   Phoenix 1.8's `put_secure_browser_headers/2` adds
   `content-security-policy: base-uri 'self'; frame-ancestors 'self';`, and

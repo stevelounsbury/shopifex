@@ -19,11 +19,10 @@ defmodule Mix.Shopifex.Grant do
 
   def indexes(),
     do: [
-      {:grants, :gin},
-      # Postgres does not auto-index foreign-key columns. `grant_for_guard/2`
-      # runs on every payment-guarded request and filters by `shop_id`, so a
-      # plain btree index here is the difference between an index scan and a
-      # sequential scan that grows with the grants table.
+      # Postgres and SQLite do not auto-index foreign-key columns.
+      # `grant_for_guard/2` runs on every payment-guarded request and filters by
+      # `shop_id`, so a plain btree index here is the difference between an
+      # index scan and a sequential scan that grows with the grants table.
       {:shop_id, :index}
     ]
 end
